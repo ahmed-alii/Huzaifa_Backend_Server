@@ -7,25 +7,31 @@ const router = express.Router();
 // Get all recipes
 router.get("/recipes", (req, res, next) => {
     Recipe.find()
-        .limit(5)
+        .limit(50)
         .skip(0)
         .then(docs => res.json({success: true, data: docs}))
         .catch(error => res.json({success: false, err: error}));
 
 });
 
+router.get("/recipesRandom", (req, res, next) => {
+    Recipe.aggregate([{ $sample: { size: 50 } }])
+        .then(docs => res.json({ success: true, data: docs }))
+        .catch(error => res.json({ success: false, err: error }));
+});
+
+
 
 // Search all recipes which has this ingredient
 router.get("/searchRecipeByIngredients", (req, res, next) => {
 
     let q = req.query.q;
-    Ingredients.findOne({title: q})
+    Ingredients.findOne({title: q.toLowerCase()})
         .exec((err, doc) => {
             if (err) {
                 res.json({success: false, err: err})
             } else {
-                console.log(doc)
-                findRecipesForThisIngredient(doc._id)
+                doc ?findRecipesForThisIngredient(doc._id) : res.json({success: false, err: "Ingredient not found"})
             }
         })
 

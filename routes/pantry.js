@@ -5,7 +5,7 @@ const {User} = require("../models/User");
 const router = express.Router();
 
 router.post("/add", (req, res, next) => {
-    let i = new Ingredients({title: req.body.title})
+    let i = new Ingredients({title: req.body.title.toLowerCase()})
     i.save((err, doc) => {
         if (err) {
             if (err.code === 11000) { //if key already present
@@ -100,9 +100,11 @@ router.post('/i-made-this', async (req, res) => {
             const pantryItemIndex = user.pantry.findIndex(
                 (item) => item._id.toString() === ingredient.ingredient._id.toString()
             );
-            if (pantryItemIndex !== -1) {
+            if (pantryItemIndex !== -1 || !isNaN(ingredient.qty)) {
                 user.pantry[pantryItemIndex].qty -= ingredient.qty;
                 user.pantry[pantryItemIndex].qty = Math.max(0, user.pantry[pantryItemIndex].qty); // Make sure the quantity doesn't go negative
+            }else{
+                return res.json({ success: true, data: 'Invalid qty in recipe - can not handle pantry' });
             }
         });
 
