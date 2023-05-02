@@ -91,29 +91,29 @@ router.post('/i-made-this', async (req, res) => {
         const recipe = await Recipe.findById(recipeId).populate('ingredients.ingredient');
 
         if (!recipe) {
-            return res.json({ success: false, err: 'Recipe not found' });
+            return res.json({success: false, err: 'Recipe not found'});
         }
 
+        let data = 'Ingredients deducted from pantry successfully'
         const user = await User.findById(req.user._id);
-
         recipe.ingredients.forEach((ingredient) => {
             const pantryItemIndex = user.pantry.findIndex(
                 (item) => item._id.toString() === ingredient.ingredient._id.toString()
             );
-            if (pantryItemIndex !== -1 || !isNaN(ingredient.qty)) {
+            if (pantryItemIndex !== -1 && !isNaN(ingredient.qty)) {
+
                 user.pantry[pantryItemIndex].qty -= ingredient.qty;
                 user.pantry[pantryItemIndex].qty = Math.max(0, user.pantry[pantryItemIndex].qty); // Make sure the quantity doesn't go negative
-            }else{
-                return res.json({ success: true, data: 'Invalid qty in recipe - can not handle pantry' });
+            } else {
+                data = "Items not found in your pantry."
             }
         });
 
         await user.save();
-
-        return res.json({ success: true, data: 'Ingredients deducted from pantry successfully' });
+        return res.json({success: true, data: data});
     } catch (err) {
         console.error(err);
-        return res.json({ success: false, err: 'Server Error' });
+        // return res.json({ success: false, err: 'Server Error' });
     }
 });
 
